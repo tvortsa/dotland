@@ -53,6 +53,50 @@ function getBenchmarkVarieties(
   return Object.keys(last[benchmarkName] ?? {});
 }
 
+function createNormalizedColumns(
+  data: BenchmarkRun[],
+  benchmarkName: BenchmarkName,
+): Column[] {
+  const columns = createColumns(data, benchmarkName);
+  normalize(columns);
+  lowpassFilter(columns);
+  return columns;
+}
+
+function normalize(columns: Column[]) {
+  const series = columns.map((s) => s.data);
+  const xMax = series.map((data) => data.length)
+    .reduce((max, y) => Math.max(max, y), 0);
+  const seriesAvg = series
+    .map((data) => data.filter((v) => v != null) as number[])
+    .map((data) => data.reduce((sum, y) => sum + y, 0) / data.length);
+  for (let x = 0; x < xMax; x++) {
+    const [ySum, avgSum] = series
+      .map((data, k) => [data[x], seriesAvg[k]])
+      .filter(([y, _avg]) => y != null)
+      .map(([y, avg]) => [y, avg] as [number, number])
+      .reduce(([ySum, avgSum], [y, avg]) => [ySum + y, avgSum + avg], [0, 0]);
+    const f = avgSum / ySum;
+    for (let k = 0; k < series.length; k++) {
+      if (series[k][x] == null) continue;
+      series[k][x]! *= f;
+    }
+  }
+}
+
+function lowpassFilter(columns: Column[]) {
+  const series = columns.map((s) => s.data);
+  const xMax = series.map((d) => d.length)
+    .reduce((max, y) => Math.max(max, y), 0);
+  const f = 1 / Math.sqrt(xMax);
+  for (let k = 0; k < series.length; k++) {
+    for (let x = 1; x < xMax; x++) {
+      series[k][x] = (1 - f) * (series[k][x - 1] ?? 0) +
+        f * (series[k][x] ?? 0);
+    }
+  }
+}
+
 function createColumns(
   data: BenchmarkRun[],
   benchmarkName: BenchmarkName,
@@ -77,7 +121,7 @@ function createColumns(
       }
       return null;
     }),
-  }));
+  })).filter(({ data }) => data.some((y) => y != null));
 }
 
 // For columns that have just a single variety
@@ -95,38 +139,6 @@ function createColumns1(
   ];
 }
 
-export function createNormalizedColumns(
-  data: BenchmarkRun[],
-  benchmarkName: BenchmarkName,
-  baselineBenchmark: BenchmarkName,
-  baselineVariety: string,
-): Column[] {
-  const varieties = getBenchmarkVarieties(data, benchmarkName);
-  return varieties.map((variety) => ({
-    name: variety,
-    data: data.map((d) => {
-      if (d[baselineBenchmark] != null) {
-        const bb = d[baselineBenchmark] as any;
-        if (bb[baselineVariety] != null) {
-          const baseline = bb[baselineVariety];
-          if (d[benchmarkName] != null) {
-            const b = d[benchmarkName] as any;
-            if (b[variety] != null && baseline !== 0) {
-              const v = b[variety];
-              if (benchmarkName === "benchmark") {
-                const meanValue = v ? v.mean : 0;
-                return meanValue || null;
-              } else {
-                return v / baseline;
-              }
-            }
-          }
-        }
-      }
-      return null;
-    }),
-  }));
-}
 function createBinarySizeColumns(data: BenchmarkRun[]): Column[] {
   const propName = "binary_size";
   const last = data[data.length - 1]!;
@@ -266,6 +278,7 @@ export interface BenchmarkData {
   proxy: Column[];
   normalizedProxy: Column[];
   maxLatency: Column[];
+  normalizedMaxLatency: Column[];
   maxMemory: Column[];
   binarySize: Column[];
   threadCount: Column[];
@@ -282,18 +295,9 @@ export function reshape(data: BenchmarkRun[]): BenchmarkData {
   // Hack to extract proxy fields from req/s fields.
   extractProxyFields(data);
 
-  const normalizedReqPerSec = createNormalizedColumns(
-    data,
-    "req_per_sec",
-    "req_per_sec",
-    "hyper",
-  );
-  const normalizedProxy = createNormalizedColumns(
-    data,
-    "req_per_sec_proxy",
-    "req_per_sec",
-    "hyper",
-  );
+  const normalizedReqPerSec = createNormalizedColumns(data, "req_per_sec");
+  const normalizedMaxLatency = createNormalizedColumns(data, "max_latency");
+  const normalizedProxy = createNormalizedColumns(data, "req_per_sec_proxy");
 
   return {
     execTime: createColumns(data, "benchmark"),
@@ -303,6 +307,7 @@ export function reshape(data: BenchmarkRun[]): BenchmarkData {
     proxy: createColumns(data, "req_per_sec_proxy"),
     normalizedProxy,
     maxLatency: createColumns(data, "max_latency"),
+    normalizedMaxLatency,
     maxMemory: createColumns(data, "max_memory"),
     binarySize: createBinarySizeColumns(data),
     threadCount: createThreadCountColumns(data),

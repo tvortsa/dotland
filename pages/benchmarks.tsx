@@ -12,7 +12,6 @@ import {
   formatKB,
   formatLogScale,
   formatMB,
-  formatPercentage,
   formatReqSec,
   reshape,
 } from "../util/benchmark_utils";
@@ -310,9 +309,8 @@ function Benchmarks(): React.ReactElement {
                   columns={showNormalized
                     ? data?.normalizedReqPerSec
                     : data?.reqPerSec}
-                  yLabel={showNormalized ? "% of hyper througput"
-                  : "1k req/sec"}
-                  yTickFormat={showNormalized ? formatPercentage : formatReqSec}
+                  yLabel="1k req/sec"
+                  yTickFormat={formatReqSec}
                 />
                 <p className="mt-1">
                   Tests HTTP server performance. 10 keep-alive connections do as
@@ -379,7 +377,8 @@ function Benchmarks(): React.ReactElement {
                 </a>{" "}
                 <BenchmarkOrLoading
                   data={data}
-                  columns={data?.maxLatency}
+                  columns={showNormalized ? data?.normalizedMaxLatency
+                  : data?.maxLatency}
                   yLabel={"milliseconds"}
                   yTickFormat={formatLogScale}
                 />
