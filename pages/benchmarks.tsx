@@ -12,7 +12,7 @@ import {
   formatKB,
   formatLogScale,
   formatMB,
-  formatPercentage,
+  formatMsec,
   formatReqSec,
   reshape,
 } from "../util/benchmark_utils";
@@ -253,7 +253,6 @@ function Benchmarks(): React.ReactElement {
                 <BenchmarkOrLoading
                   data={data}
                   columns={data?.execTime.filter(({ name }) => {
-                    console.log(name);
                     return typescriptBenches.includes(name);
                   })}
                   yLabel="seconds"
@@ -310,9 +309,8 @@ function Benchmarks(): React.ReactElement {
                   columns={showNormalized
                     ? data?.normalizedReqPerSec
                     : data?.reqPerSec}
-                  yLabel={showNormalized ? "% of hyper througput"
-                  : "1k req/sec"}
-                  yTickFormat={showNormalized ? formatPercentage : formatReqSec}
+                  yLabel="1k req/sec"
+                  yTickFormat={formatReqSec}
                 />
                 <p className="mt-1">
                   Tests HTTP server performance. 10 keep-alive connections do as
@@ -379,13 +377,14 @@ function Benchmarks(): React.ReactElement {
                 </a>{" "}
                 <BenchmarkOrLoading
                   data={data}
-                  columns={data?.maxLatency}
+                  columns={showNormalized ? data?.normalizedMaxLatency
+                  : data?.maxLatency}
                   yLabel={"milliseconds"}
-                  yTickFormat={formatLogScale}
+                  yTickFormat={formatMsec}
                 />
                 <p className="mt-1">
                   Max latency during the same test used above for
-                  requests/second. Smaller is better. Log scale.
+                  requests/second. Smaller is better.
                 </p>
               </div>
             </div>
