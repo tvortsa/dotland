@@ -373,7 +373,7 @@ function Manual(): React.ReactElement {
                   <img src="/logo.svg" alt="logo" className="w-auto h-12" />
                   <div className="mx-4 flex flex-col justify-center">
                     <div className="font-bold text-gray-900 leading-6 text-2xl tracking-tight">
-                      Deno Manual
+                      Deno руководство
                     </div>
                   </div>
                 </a>
@@ -426,7 +426,7 @@ function Manual(): React.ReactElement {
                     <div className="pl-6">
                       <span className="inline sm:hidden">Search docs</span>
                       <span className="hidden sm:inline">
-                        Search the docs (press <InlineCode>/</InlineCode>{" "}
+                        Искать в документации (press <InlineCode>/</InlineCode>{" "}
                         to focus)
                       </span>
                     </div>
@@ -484,7 +484,7 @@ function Manual(): React.ReactElement {
                     </svg>
                   </div>
                   <div className="pl-6">
-                    Search the docs (press <InlineCode>/</InlineCode> to focus)
+                    Искать в документации (нажмите <InlineCode>/</InlineCode> для фокуса)
                   </div>
                 </button>
               </div>
@@ -611,17 +611,17 @@ function UserContributionBanner({
           <div className="w-0 flex-1 flex items-center">
             <p className="ml-3 font-medium text-gray-900">
               <span>
-                You are viewing documentation generated from a{"  "}
-                <b className="font-bold">user contribution</b>{"  "}
-                or an upcoming or past release. The contents of this document
-                may not have been reviewed by the Deno team.{" "}
+                Вы просматриваете документацию, созданную на основе{"  "}
+                <b className="font-bold">вклада пользователей</b>{"  "}
+                или предстоящий или прошлый релизы. Возможно, содержимое этого документа не было проверено 
+                командой Deno..{" "}
               </span>
 
               <span
                 className="underline cursor-pointer text-gray-900"
                 onClick={() => gotoVersion(versions[0])}
               >
-                Click here to view the documentation for the latest release.
+                Щелкните здесь, чтобы просмотреть документацию по последней версии.
               </span>
             </p>
           </div>
